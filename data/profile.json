@@ -1,0 +1,57 @@
+{
+  "name": "Jackie Morgan",
+  "title": "Senior Software Engineer & Cloud Architect",
+  "tagline": "Building reliable, scalable systems with maximum power.",
+  "location": "Remote — Global",
+  "avatar": "/assets/avatar.svg",
+  "summary": "Full-stack engineer with a decade of experience designing distributed SaaS platforms, leading teams, and shipping products that scale. Passionate about clean architecture, developer experience, and pragmatic delivery.",
+  "contact": {
+    "email": "jackie@example.com",
+    "website": "https://jackie.example.com",
+    "github": "https://github.com/jackie",
+    "linkedin": "https://www.linkedin.com/in/jackie"
+  },
+  "skills": [
+    "JavaScript / TypeScript",
+    "Node.js",
+    "Python",
+    "Go",
+    "Cloud (AWS / GCP)",
+    "Kubernetes",
+    "PostgreSQL",
+    "System Design"
+  ],
+  "experience": [
+    {
+      "company": "Nimbus SaaS",
+      "role": "Lead Engineer",
+      "period": "2021 — Present",
+      "highlights": [
+        "Architected a multi-tenant platform serving 2M+ daily requests.",
+        "Cut p95 latency by 40% through caching and query optimization.",
+        "Mentored a team of 6 engineers."
+      ]
+    },
+    {
+      "company": "DataForge",
+      "role": "Senior Software Engineer",
+      "period": "2017 — 2021",
+      "highlights": [
+        "Built the event-driven analytics pipeline from the ground up.",
+        "Introduced CI/CD reducing deploy time from hours to minutes."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "OpenMetrics Dashboard",
+      "description": "Real-time observability dashboard for distributed systems.",
+      "url": "https://github.com/jackie/openmetrics"
+    },
+    {
+      "name": "EdgeCache",
+      "description": "Lightweight edge caching layer with sub-millisecond reads.",
+      "url": "https://github.com/jackie/edgecache"
+    }
+  ]
+}
