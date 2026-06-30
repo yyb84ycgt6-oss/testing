@@ -7,6 +7,7 @@ const rootDir = path.resolve(__dirname, '..');
 export const config = {
   port: Number(process.env.PORT) || 3000,
   host: process.env.HOST || '0.0.0.0',
+  adminToken: process.env.ADMIN_TOKEN || 'jackie-sas-secret',
   rootDir,
   publicDir: path.join(rootDir, 'public'),
   dataDir: path.join(rootDir, 'data'),

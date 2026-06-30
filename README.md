@@ -89,10 +89,40 @@ Tests use Node's built-in test runner (`node --test`):
 
 ## Roadmap / collaboration ideas
 
-- Add `PUT /api/profile` with auth to make it a true editable SaaS.
-- Persist data in a database (PostgreSQL/SQLite) behind the service layer.
-- Multi-tenant profiles (`/api/profiles/:handle`).
-- Containerize with a `Dockerfile` and add CI.
+- [x] **Dynamic Admin Editing Panel** (Fully integrated in SPA with validation and secure saving).
+- [x] **PUT /api/profile Endpoint** (With token-based authentication and atomic JSON file persistence).
+- [x] **Containerization** (Clean, multi-stage secure `Dockerfile` with non-root user).
+- [x] **Continuous Integration** (GitHub Actions CI workflow for multiple Node versions).
+- [ ] Multi-tenant profiles (`/api/profiles/:handle`).
+- [ ] Database persistence (PostgreSQL/SQLite) behind the service layer.
+
+## Admin System & Console
+
+To access the interactive Developer & Admin Console and edit Jackie's profile dynamically:
+1. Scroll to the bottom of the page and click **"Admin System Access"**.
+2. Enter the admin token: `jackie-sas-secret` (configurable via `ADMIN_TOKEN` environment variable).
+3. Click **"Edit Profile"** at the top right to open the form.
+4. Modify any standard text field, or use the **Advanced Structs (JSON)** editor to update experience, project highlights, or contact information with maximum structure power.
+5. Click **"Save Changes"** to persist your updates directly to `data/profile.json`.
+
+## Docker Containerization
+
+To run the application inside a secure, lightweight container:
+
+```bash
+docker build -t jackies-profile .
+docker run -d -p 3000:3000 --name jackies-profile-app jackies-profile
+```
+
+For custom configuration (e.g., customized admin token or port):
+
+```bash
+docker run -d -p 8080:3000 -e ADMIN_TOKEN="your-secure-token" --name jackies-profile-app jackies-profile
+```
+
+## Continuous Integration
+
+A GitHub Actions workflow is fully configured in `.github/workflows/ci.yml`. It automatically runs the complete test suite on every push or pull request using Node.js versions 18, 20, and 22 to guarantee maximum code quality and backwards compatibility.
 
 ## License
 

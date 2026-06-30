@@ -127,3 +127,125 @@ a {
   color: #f87171;
   text-align: center;
 }
+
+/* Admin and Form styling */
+.admin-bar {
+  background: #1e1b4b;
+  border-bottom: 2px solid var(--accent);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.admin-bar span {
+  color: #a5f3fc;
+  font-weight: bold;
+}
+
+.btn {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #0f172a;
+}
+
+.btn-secondary {
+  background: #475569;
+  color: var(--text);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.edit-form {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: bold;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: var(--text);
+  padding: 0.6rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.json-textarea {
+  font-family: monospace !important;
+  font-size: 0.85rem !important;
+}
+
+.help-text {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.admin-footer {
+  text-align: center;
+  margin-top: 3rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-top: 1px dashed #334155;
+  padding-top: 1.5rem;
+}
+
+.admin-link {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-link:hover {
+  color: var(--accent);
+}

@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { config } from '../config.js';
 
 const REQUIRED_FIELDS = ['name', 'title'];
@@ -36,4 +36,11 @@ export async function getProfile({ profileFile = config.profileFile } = {}) {
   }
 
   return validateProfile(parsed);
+}
+
+export async function updateProfile(newProfile, { profileFile = config.profileFile } = {}) {
+  validateProfile(newProfile);
+  const raw = JSON.stringify(newProfile, null, 2);
+  await writeFile(profileFile, raw, 'utf-8');
+  return newProfile;
 }

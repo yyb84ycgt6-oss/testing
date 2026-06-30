@@ -2,11 +2,12 @@ import { stat, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { config } from './config.js';
 import { sendError, mimeTypeFor } from './lib/http.js';
-import { handleGetProfile, handleHealth } from './routes/profile.js';
+import { handleGetProfile, handleHealth, handleUpdateProfile } from './routes/profile.js';
 
 const apiRoutes = {
   'GET /api/health': handleHealth,
   'GET /api/profile': handleGetProfile,
+  'PUT /api/profile': handleUpdateProfile,
 };
 
 async function serveStatic(req, res, pathname) {
