@@ -1,4 +1,4 @@
-# Jackie's Profile — SAS (Software-as-a-Service) Profile App
+# Jackie's Profile — SAS / SaaS (Software-as-a-Service) Profile App
 
 A runnable starting codebase for **Jackie's profile** application: a small,
 dependency-free **Software-as-a-Service style** web app that serves a

@@ -1,7 +1,7 @@
 {
   "name": "jackies-profile",
   "version": "0.1.0",
-  "description": "SAS (Software-as-a-Service) profile application for Jackie — a runnable starting codebase.",
+  "description": "SAS / SaaS (Software-as-a-Service) profile application for Jackie — a runnable starting codebase.",
   "type": "module",
   "main": "src/server.js",
   "engines": {

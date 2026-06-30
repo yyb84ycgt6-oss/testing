@@ -4,7 +4,8 @@ import { handleRequest } from './app.js';
 
 export function createServer() {
   return http.createServer((req, res) => {
-    handleRequest(req, res).catch(() => {
+    handleRequest(req, res).catch((err) => {
+      console.error('Unexpected server error:', err);
       res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: { status: 500, message: 'Unexpected server error.' } }));
     });

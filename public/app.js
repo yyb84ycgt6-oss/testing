@@ -86,12 +86,12 @@ function renderProfile(profile) {
 }
 
 function renderEditForm(profile) {
-  const advanceData = {
+  const advancedData = {
     contact: profile.contact || {},
     experience: profile.experience || [],
     projects: profile.projects || []
   };
-  const advanceJson = JSON.stringify(advanceData, null, 2);
+  const advancedJson = JSON.stringify(advancedData, null, 2);
 
   return `
     ${renderAdminBar()}
@@ -141,7 +141,7 @@ function renderEditForm(profile) {
 
       <div class="form-group">
         <label for="form-advanced">Advanced Structs (Contact, Experience, Projects) — JSON</label>
-        <textarea id="form-advanced" rows="12" class="json-textarea">${escape(advanceJson)}</textarea>
+        <textarea id="form-advanced" rows="12" class="json-textarea">${escape(advancedJson)}</textarea>
         <p class="help-text">Validate raw structures with maximum power. Must be compliant JSON.</p>
       </div>
 
