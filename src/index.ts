@@ -10,3 +10,4 @@ export * from './agents.js';
 export * from './plugins.js';
 export * from './gates.js';
 export * from './termstudio-core.js';
+export * from './termstudio-tool.js';
