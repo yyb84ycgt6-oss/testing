@@ -169,6 +169,47 @@ User in PC App → "Test NFC Reader Compliance"
 
 ---
 
+## Implementation Addendum: Marketplace-First Execution
+
+This addendum implements the required execution plan while keeping the current architecture unchanged.
+
+### 1) Architecture Constraint (Locked)
+- Keep the **current PC + Flipper controller architecture** exactly as-is.
+- Keep **Flipper firmware unchanged**.
+- Use existing **USB/Bluetooth + protobuf RPC** flows only.
+
+### 2) Marketplace Candidate Intake Order (Mandatory)
+Evaluate marketplace options in this exact order:
+1. **USB/serial + protobuf RPC tooling**
+2. **Device/session management**
+3. **Security policy/rules engine**
+4. **Telemetry + log aggregation**
+5. **Dashboard/UI components for hardware status + test results**
+6. **Secrets/config management for device credentials**
+
+### 3) Prioritization Rule
+Prioritize any candidate that:
+- Reduces custom bridge code under `/flipper-integration/`
+- Improves reliability (retries, health checks, fault handling)
+- Improves observability (structured logs, traces, metrics, device/session visibility)
+
+### 4) Hard Rejection Rules
+Reject any candidate that requires:
+- Flipper firmware changes
+- Game abstractions
+- Cloud lock-in for core hardware control/test flows
+
+### 5) Base44 Handoff Package (All Candidates)
+For Base44 app setup, package and send the same import source with:
+- This integration spec
+- Current repository snapshot
+- **Every shortlisted marketplace candidate from all six buckets** (including accepted/rejected decision notes and rationale)
+- Integration boundary definitions (PC controller responsibilities vs Flipper RPC responsibilities)
+
+This ensures every relevant candidate is delivered to Base44 while preserving the existing hardware integration model.
+
+---
+
 ## Why This Approach?
 
 1. **Preserves all functionality**: Flipper firmware unchanged, PC app is new development
@@ -177,4 +218,3 @@ User in PC App → "Test NFC Reader Compliance"
 4. **Security-focused**: Clear separation of concerns (control vs. testing)
 5. **Production-ready**: Uses proven embedded RPC patterns instead of custom integrations
 6. **Serious & Professional**: No game mechanics, pure security validation
-
