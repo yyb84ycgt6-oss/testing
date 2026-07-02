@@ -2,7 +2,7 @@
 
 ## Context
 You're building **Sirius**, a serious security-focused AI router that combines:
-- **PC Application**: Control interface for hardware and online services (Gemini-based, to be built)
+- **PC Application**: Planned Gemini-based control interface for hardware and online services
 - **Flipper Zero Firmware**: Embedded software (C/FreeRTOS) for RF/wireless security testing and validation on Flipper Zero hardware
 
 The goal is to integrate these as a unified security system where the Flipper Zero becomes the **hardware validation and RF testing component** of the Sirius router, controlled and monitored from the PC app. All functionality must be preserved; no games, no mocks.

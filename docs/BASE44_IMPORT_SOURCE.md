@@ -5,6 +5,7 @@ This package defines what must be sent to Base44 for app setup, using the same P
 ## Required Artifacts
 - Integration spec: `docs/SIRIUS_INTEGRATION_PLAN.md`
 - Repository snapshot: `base44-import-repo-snapshot.tar.gz` (archive of repository root)
+- Snapshot generation reference: create from repo root before handoff (`tar -czf base44-import-repo-snapshot.tar.gz .`)
 
 ## Marketplace Candidate Transfer Set (Send Every Single One)
 
