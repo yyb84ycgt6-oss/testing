@@ -5,7 +5,7 @@ This package defines what must be sent to Base44 for app setup, using the same P
 ## Required Artifacts
 - Integration spec: `docs/SIRIUS_INTEGRATION_PLAN.md`
 - Repository snapshot: `base44-import-repo-snapshot.tar.gz` (archive of repository root)
-- Snapshot generation reference: create from repo root before handoff (`tar --exclude=.git --exclude=node_modules --exclude=.env -czf base44-import-repo-snapshot.tar.gz .`)
+- Snapshot generation reference: create from repo root before handoff (`tar --exclude=.git --exclude=node_modules --exclude=.env --exclude=.env.* --exclude=*.pem --exclude=*.key -czf base44-import-repo-snapshot.tar.gz .`)
 
 ## Marketplace Candidate Transfer Set (Send Every Single One)
 
@@ -54,3 +54,15 @@ All candidates below are part of the Base44 handoff set. Include accepted and re
 - Reduce custom bridge code in `/flipper-integration/`
 - Improve reliability
 - Improve observability
+
+## After Upload: One-by-One Implementation Order
+
+After Base44 upload is complete, implement in this order (one bucket at a time):
+1. USB/serial + protobuf RPC tooling
+2. Device/session management
+3. Security policy/rules engine
+4. Telemetry + log aggregation
+5. Dashboard/UI components for hardware status + test results
+6. Secrets/config management for device credentials
+
+For each phase, keep scope simple but detailed, apply the same prioritization focus, and enforce all mandatory constraints.
