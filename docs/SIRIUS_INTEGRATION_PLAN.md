@@ -203,7 +203,7 @@ Reject any candidate that requires:
 For Base44 app setup, package and send the same import source with:
 - This integration spec
 - Current repository snapshot
-- **Every shortlisted marketplace candidate from all six buckets** (including accepted/rejected decision notes and rationale)
+- **Every evaluated marketplace candidate from all six buckets** (accepted and rejected, with decision notes and rationale)
 - Integration boundary definitions (PC controller responsibilities vs Flipper RPC responsibilities)
 
 This ensures every relevant candidate is delivered to Base44 while preserving the existing hardware integration model.
