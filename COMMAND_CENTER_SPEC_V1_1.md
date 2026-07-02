@@ -42,11 +42,15 @@ Primary entities:
 - `pc_snapshot`
 
 ### 3.2 Flipper Zero Module
-Purpose: manage authorized device profiles, payload libraries, sync history, and lab workflows.
+Purpose: manage authorized device profiles, files, connectivity, sync history, and lab workflows.
 
 Capabilities:
 - Device inventory and ownership tracking
 - Payload/profile library with version history
+- File import/export and save workflows
+- Managed cloud backup/sync targets
+- Bluetooth pairing and session state tracking
+- Wi-Fi network profiles and connection state tracking
 - Sync/import/export history
 - Lab workflow execution for approved scenarios
 - Device health and state summaries
@@ -56,8 +60,23 @@ Primary entities:
 - `flipper_device`
 - `flipper_profile`
 - `flipper_payload`
+- `flipper_file_asset`
+- `flipper_cloud_target`
+- `flipper_bluetooth_pair`
+- `flipper_wifi_profile`
 - `flipper_sync_job`
 - `flipper_state_snapshot`
+
+Connectivity surfaces:
+- Cloud connectors for approved storage providers
+- Bluetooth device pairing and trusted-session management
+- Wi-Fi profile registration, testing, and state visibility
+
+File lifecycle:
+- Import files into the Flipper workspace
+- Export files from the device or library to approved destinations
+- Save versioned file snapshots with metadata and audit traces
+- Restore previously approved file versions
 
 ### 3.3 OpenClaw Module
 Purpose: preserve OpenClaw functionality as an isolated operational domain.
@@ -98,6 +117,9 @@ Permission pattern:
   - `pc.device.read`
   - `pc.session.execute`
   - `flipper.payload.approve`
+  - `flipper.cloud.sync`
+  - `flipper.bluetooth.pair`
+  - `flipper.wifi.connect`
   - `openclaw.operation.execute`
   - `audit.trace.read`
 
@@ -141,6 +163,9 @@ Shared fields:
 ### Approval-Gated Action Classes
 - Device write or destructive changes
 - Profile/payload publication
+- New cloud target registration
+- Bluetooth pairing with a new device
+- Wi-Fi profile creation or connection changes
 - Session takeover or remote execution
 - Cross-module workflow execution
 - Export of classified outputs
@@ -153,6 +178,9 @@ Shared fields:
 | Execute low-risk workflow | `*.execute` | Conditional allow | Target scope check |
 | Execute high-risk workflow | `*.execute` | Deny until approved | Owner/Security approval |
 | Export artifact | `asset.export` | Conditional allow | Classification + audit tag |
+| Register cloud target | `flipper.cloud.write` | Deny until approved | Secret handling + target validation |
+| Pair Bluetooth device | `flipper.bluetooth.pair` | Conditional allow | Trust policy + audit trace |
+| Connect to Wi-Fi profile | `flipper.wifi.connect` | Conditional allow | Approved profile + environment policy |
 | Modify device/profile state | `*.write` | Deny until approved | Risk review + trace requirement |
 | Cross-module action chain | `workflow.execute` | Deny until approved | Policy simulation + approval |
 
@@ -164,6 +192,12 @@ All modules use the same action taxonomy:
 - `asset.write`
 - `profile.read`
 - `profile.write`
+- `file.import`
+- `file.export`
+- `file.save`
+- `cloud.sync`
+- `bluetooth.pair`
+- `wifi.connect`
 - `workflow.create`
 - `workflow.execute`
 - `session.read`
@@ -200,6 +234,11 @@ Representative events:
 - `queue.approval.granted`
 - `audit.trace.finalized`
 - `pc.session.started`
+- `flipper.file.imported`
+- `flipper.file.exported`
+- `flipper.cloud.sync.completed`
+- `flipper.bluetooth.paired`
+- `flipper.wifi.connected`
 - `flipper.sync.completed`
 - `openclaw.operation.finished`
 
@@ -220,8 +259,12 @@ Representative events:
   - `/pc/tools`
 - `/flipper`
   - `/flipper/devices`
+  - `/flipper/files`
   - `/flipper/profiles`
   - `/flipper/payloads`
+  - `/flipper/cloud`
+  - `/flipper/bluetooth`
+  - `/flipper/wifi`
   - `/flipper/sync-history`
 - `/openclaw`
   - `/openclaw/assets`
