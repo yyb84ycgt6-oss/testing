@@ -3,8 +3,8 @@
 This package defines what must be sent to Base44 for app setup, using the same PC + Flipper integration model.
 
 ## Required Artifacts
-- Integration spec: `/home/runner/work/testing/testing/docs/SIRIUS_INTEGRATION_PLAN.md`
-- Repository snapshot: `/home/runner/work/testing/testing`
+- Integration spec: `docs/SIRIUS_INTEGRATION_PLAN.md`
+- Repository snapshot: `.`
 
 ## Marketplace Candidate Transfer Set (Send Every Single One)
 
