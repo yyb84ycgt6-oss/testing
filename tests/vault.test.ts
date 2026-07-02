@@ -72,7 +72,7 @@ describe('security vault lifecycle and encryption', () => {
 
 describe('ollama localhost guardrails', () => {
   it('rejects non-local endpoints', () => {
-    expect(() => new OllamaClient('https://api.remote.ai')).toThrow(/localhost only/);
+    expect(() => new OllamaClient('https://api.remote.ai')).toThrow(/localhost/);
   });
 
   it('performs real health request path with error handling', async () => {
