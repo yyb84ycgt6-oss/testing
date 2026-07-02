@@ -2,7 +2,7 @@
 
 ## Context
 You're building **Sirius**, a serious security-focused AI router that combines:
-- **PC Application**: Planned Gemini-based control interface for hardware and online services
+- **PC Application**: Planned control interface using Google Gemini API services for orchestration and analysis
 - **Flipper Zero Firmware**: Embedded software (C/FreeRTOS) for RF/wireless security testing and validation on Flipper Zero hardware
 
 The goal is to integrate these as a unified security system where the Flipper Zero becomes the **hardware validation and RF testing component** of the Sirius router, controlled and monitored from the PC app. All functionality must be preserved; no games, no mocks.
@@ -127,7 +127,7 @@ User in PC App → "Test NFC Reader Compliance"
 - ✅ Results aggregation and security analysis layer
 
 ### Technology Choices
-- **PC App Framework**: Gemini-based (as per your Google AI Studio plan)
+- **PC App Framework**: Gemini-enabled application stack
 - **Flipper Communication**: Use protobuf + RPC over USB/Bluetooth
 - **Language**: TypeScript/JavaScript for PC app (best for Gemini integration)
 - **Hardware Access**: Use node-usb or similar for USB communication

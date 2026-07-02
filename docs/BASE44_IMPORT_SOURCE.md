@@ -5,7 +5,7 @@ This package defines what must be sent to Base44 for app setup, using the same P
 ## Required Artifacts
 - Integration spec: `docs/SIRIUS_INTEGRATION_PLAN.md`
 - Repository snapshot: `base44-import-repo-snapshot.tar.gz` (archive of repository root)
-- Snapshot generation reference: create from repo root before handoff (`tar -czf base44-import-repo-snapshot.tar.gz .`)
+- Snapshot generation reference: create from repo root before handoff (`tar --exclude=.git --exclude=node_modules --exclude=.env -czf base44-import-repo-snapshot.tar.gz .`)
 
 ## Marketplace Candidate Transfer Set (Send Every Single One)
 
@@ -14,7 +14,7 @@ All candidates below are part of the Base44 handoff set. Include accepted and re
 ### 1) USB/serial + protobuf RPC tooling
 - `serialport` (Node) — **Accepted** — Mature serial transport, reduces custom USB/serial glue code.
 - `@grpc/grpc-js` — **Accepted (optional transport layer)** — Strong protobuf RPC patterns for controller-side abstraction.
-- `node-hid` — **Rejected (core flow)** — HID-first orientation; lower fit for protobuf-over-serial primary path.
+- `node-hid` — **Rejected (core flow)** — HID-focused transport does not align with the protobuf-over-serial RPC path and would add adapter complexity.
 
 ### 2) Device/session management
 - `xstate` — **Accepted** — Deterministic device/session state machine for reconnect/retry reliability.
