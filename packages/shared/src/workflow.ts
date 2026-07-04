@@ -7,6 +7,8 @@ import { recordAudit } from "./audit.ts";
  * Steps execute sequentially; any failure halts the run.
  */
 
+const MAX_WORKFLOW_STEPS = 50;
+
 type StepHandler = (
   input: Readonly<Record<string, unknown>>
 ) => Promise<Readonly<Record<string, unknown>>>;
@@ -23,6 +25,13 @@ export function createWorkflowRun(
   created_by: string,
   steps: Array<{ action: string; input: Readonly<Record<string, unknown>> }>
 ): WorkflowRun {
+  if (steps.length === 0) {
+    throw new Error("WorkflowRun must have at least one step.");
+  }
+  if (steps.length > MAX_WORKFLOW_STEPS) {
+    throw new Error(`WorkflowRun exceeds maximum step count of ${MAX_WORKFLOW_STEPS}.`);
+  }
+
   const run: WorkflowRun = {
     run_id: crypto.randomUUID(),
     created_by,

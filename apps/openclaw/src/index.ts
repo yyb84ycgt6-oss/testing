@@ -57,6 +57,23 @@ function validateConfidence(c: number): void {
   if (c < 0 || c > 1) throw new Error("Confidence must be between 0 and 1.");
 }
 
+function validateEndpoint(url: string): void {
+  if (!url || url.length === 0) throw new Error("Endpoint is required.");
+  if (url.length > 2048) throw new Error("Endpoint URL exceeds maximum length.");
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      throw new Error("Endpoint must use http or https protocol.");
+    }
+  } catch (e) {
+    // Check if it's a protocol error we threw
+    if (e instanceof Error && e.message.includes("http or https")) {
+      throw e;
+    }
+    throw new Error("Endpoint is not a valid URL.");
+  }
+}
+
 function requireApprovalGate(ctx: AccessContext, permission: string, approved: boolean): void {
   const decision = evaluatePolicy({ action_id: crypto.randomUUID(), permission, ctx, approved });
   recordAudit({
@@ -79,7 +96,8 @@ export function registerAsset(
   input: { name: string; endpoint: string; asset_class: string }
 ): OpenClawAsset {
   assertAccess(ctx, "openclaw.asset.write");
-  if (!input.name || !input.endpoint) throw new Error("Name and endpoint required.");
+  if (!input.name) throw new Error("Name and endpoint required.");
+  validateEndpoint(input.endpoint);
 
   const now = new Date().toISOString();
   const asset: OpenClawAsset = {

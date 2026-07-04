@@ -13,7 +13,8 @@ export interface PCDevice extends Asset {
   readonly asset_type: "pc_device";
   readonly module: "pc";
   hostname: string;
-  ip_address: string; // never logged in plaintext
+  /** SHA-256 of the raw IP address — raw address is never stored */
+  readonly ip_address_hash: string;
   os: string;
   last_seen: string;
 }
@@ -65,6 +66,14 @@ function validatePath(p: string): void {
   }
 }
 
+function validateLaunchCommand(cmd: string): void {
+  if (!cmd || cmd.length === 0) throw new Error("launch_command is required.");
+  if (cmd.length > 512) throw new Error("launch_command exceeds maximum allowed length.");
+  if (/[;&|`$><\n\r\x00]/.test(cmd)) {
+    throw new Error("launch_command contains disallowed shell metacharacters.");
+  }
+}
+
 // ─── PC Module API ────────────────────────────────────────────────────────────
 
 export function registerDevice(
@@ -74,6 +83,8 @@ export function registerDevice(
   assertAccess(ctx, "pc.device.write");
   validateHostname(input.hostname);
   if (!input.os) throw new Error("OS is required.");
+
+  const ip_address_hash = crypto.createHash("sha256").update(input.ip_address).digest("hex");
 
   const now = new Date().toISOString();
   const device: PCDevice = {
@@ -87,7 +98,7 @@ export function registerDevice(
     created_at: now,
     updated_at: now,
     hostname: input.hostname,
-    ip_address: input.ip_address, // stored but never logged
+    ip_address_hash,
     os: input.os,
     last_seen: now,
   };
@@ -99,7 +110,6 @@ export function registerDevice(
     module: "pc",
     event_type: "pc.device.registered",
     outcome: "success",
-    // ip_address intentionally omitted from audit detail
     detail: { asset_id: device.asset_id, hostname: device.hostname },
   });
   return device;
@@ -244,6 +254,7 @@ export function registerTool(
 ): PCToolProfile {
   assertAccess(ctx, "pc.device.write");
   if (!input.name || !input.version) throw new Error("Tool name and version are required.");
+  validateLaunchCommand(input.launch_command);
 
   const now = new Date().toISOString();
   const tool: PCToolProfile = {

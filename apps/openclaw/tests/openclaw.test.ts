@@ -39,6 +39,30 @@ describe("OpenClaw – Assets", () => {
   it("getAsset throws for unknown id", () => {
     expect(() => getAsset(ownerCtx, "nonexistent")).toThrow("not found");
   });
+
+  it("analyst cannot register assets", () => {
+    expect(() =>
+      registerAsset(analystCtx, { name: "Hack", endpoint: "https://hack.internal", asset_class: "api" })
+    ).toThrow("Access denied");
+  });
+
+  it("rejects non-http/https endpoint protocol", () => {
+    expect(() =>
+      registerAsset(ownerCtx, { name: "Evil", endpoint: "file:///etc/passwd", asset_class: "api" })
+    ).toThrow("http or https");
+  });
+
+  it("rejects malformed endpoint URL", () => {
+    expect(() =>
+      registerAsset(ownerCtx, { name: "Bad", endpoint: "not-a-url", asset_class: "api" })
+    ).toThrow("valid URL");
+  });
+
+  it("archived asset is excluded from listAssets", () => {
+    const a = registerAsset(ownerCtx, { name: "ToArchive", endpoint: "https://archive.internal", asset_class: "api" });
+    a.status = "archived";
+    expect(listAssets(ownerCtx).find((x) => x.asset_id === a.asset_id)).toBeUndefined();
+  });
 });
 
 describe("OpenClaw – Operations", () => {
@@ -121,5 +145,48 @@ describe("OpenClaw – Results", () => {
 
   it("auditor cannot list results", () => {
     expect(() => listResults(auditorCtx)).toThrow("Access denied");
+  });
+
+  it("completeJob throws for unknown job_id", () => {
+    expect(() => completeJob(ownerCtx, "nonexistent-job", {}, 0.5)).toThrow("not found");
+  });
+
+  it("result output object is frozen — mutation throws", () => {
+    const op = createOperation(ownerCtx, { name: "Scan", template: {}, risk_level: "low" });
+    const asset = registerAsset(ownerCtx, { name: "T", endpoint: "https://t.internal", asset_class: "api" });
+    const job = queueJob(ownerCtx, { operation_id: op.asset_id, target_asset_id: asset.asset_id }, true);
+    const result = completeJob(ownerCtx, job.asset_id, { data: "sensitive" }, 0.9);
+    expect(() => {
+      // @ts-expect-error intentional mutation attempt
+      result.output.data = "tampered";
+    }).toThrow();
+  });
+
+  it("export audit record is created on success", () => {
+    const op = createOperation(ownerCtx, { name: "Scan", template: {}, risk_level: "low" });
+    const asset = registerAsset(ownerCtx, { name: "T", endpoint: "https://t.internal", asset_class: "api" });
+    const job = queueJob(ownerCtx, { operation_id: op.asset_id, target_asset_id: asset.asset_id }, true);
+    const result = completeJob(ownerCtx, job.asset_id, {}, 0.7);
+    exportResult(ownerCtx, result.asset_id, true);
+    const logs = getAuditRecords({ module: "openclaw" });
+    expect(logs.some((l) => l.event_type === "openclaw.result.exported")).toBe(true);
+  });
+});
+
+describe("OpenClaw – Role boundaries", () => {
+  it("auditor cannot list operations", () => {
+    expect(() => listOperations(auditorCtx)).toThrow("Access denied");
+  });
+
+  it("auditor cannot list jobs", () => {
+    expect(() => listJobs(auditorCtx)).toThrow("Access denied");
+  });
+
+  it("analyst cannot queue a job", () => {
+    const op = createOperation(ownerCtx, { name: "S", template: {}, risk_level: "low" });
+    const asset = registerAsset(ownerCtx, { name: "T", endpoint: "https://t.internal", asset_class: "api" });
+    expect(() =>
+      queueJob(analystCtx, { operation_id: op.asset_id, target_asset_id: asset.asset_id }, true)
+    ).toThrow("denied");
   });
 });

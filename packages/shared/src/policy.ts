@@ -14,6 +14,7 @@ const HIGH_RISK_ACTIONS = new Set([
   "flipper.wifi.connect", "flipper.device.write",
   "openclaw.operation.execute",
   "asset.export", "workflow.execute",
+  "policy.manage",
 ]);
 
 export interface PolicyRequest {
