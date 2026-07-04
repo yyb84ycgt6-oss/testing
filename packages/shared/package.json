@@ -1,0 +1,16 @@
+{
+  "name": "@command-center/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "*"
+  }
+}
