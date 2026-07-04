@@ -11,3 +11,4 @@ export * from './plugins.js';
 export * from './gates.js';
 export * from './termstudio-core.js';
 export * from './termstudio-tool.js';
+export * from './merge-strategy.js';
