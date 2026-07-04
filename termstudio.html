@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TermStudio Phase 1</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; font-family: Inter, Arial, sans-serif; background:#0b1020; color:#e6e8ef; }
+      .app { display:grid; grid-template-columns: 260px 1fr 360px; height:100vh; }
+      .panel { border-right:1px solid #1f2a44; padding:12px; overflow:auto; }
+      .main { display:grid; grid-template-rows: 1fr 220px; }
+      .editor-wrap { padding:12px; display:flex; flex-direction:column; gap:8px; }
+      textarea, input, select, button { background:#0f1830; color:#e6e8ef; border:1px solid #2f3b5d; border-radius:8px; padding:8px; }
+      textarea { width:100%; height:100%; resize:none; }
+      .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+      .file-item { display:block; width:100%; text-align:left; margin-bottom:6px; }
+      .terminal { border-top:1px solid #1f2a44; padding:12px; display:grid; grid-template-rows:1fr auto; gap:8px; }
+      #terminalLog { white-space:pre-wrap; font-family: ui-monospace, monospace; overflow:auto; background:#0a1329; padding:8px; border-radius:8px; border:1px solid #1f2a44; }
+      .stat { margin:4px 0; font-family: ui-monospace, monospace; }
+      .small { font-size:12px; opacity:0.85; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="panel">
+        <h3>Files (OPFS)</h3>
+        <div class="toolbar">
+          <input id="newFileName" placeholder="notes/todo.md" />
+          <button id="createFileBtn">Create</button>
+        </div>
+        <div id="fileList"></div>
+      </aside>
+
+      <main class="main">
+        <section class="editor-wrap">
+          <div class="toolbar">
+            <strong id="activeFileLabel">No file selected</strong>
+            <button id="saveFileBtn">Save</button>
+            <button id="compressFileBtn">Compress current</button>
+          </div>
+          <textarea id="editor" placeholder="Open or create a file"></textarea>
+        </section>
+        <section class="terminal">
+          <div id="terminalLog">Terminal ready. Try: agent review</div>
+          <div class="toolbar">
+            <input id="terminalInput" placeholder="Enter command (e.g., agent review)" style="flex:1" />
+            <button id="runCommandBtn">Run</button>
+          </div>
+        </section>
+      </main>
+
+      <aside class="panel">
+        <h3>AI Sidebar</h3>
+        <div class="toolbar">
+          <label>Supervisor</label>
+          <input id="supervisorModel" value="llama3.1" />
+        </div>
+        <div class="toolbar">
+          <label>Specialist</label>
+          <input id="specialistModel" value="qwen2.5:3b" />
+        </div>
+        <div class="toolbar">
+          <label><input type="checkbox" id="agentModeToggle" /> Agent Mode</label>
+        </div>
+        <textarea id="aiPrompt" placeholder="Ask about the current file..."></textarea>
+        <div class="toolbar">
+          <button id="askAiBtn">Ask AI</button>
+        </div>
+        <textarea id="aiResponse" readonly placeholder="AI response"></textarea>
+
+        <h3>Disk Manager</h3>
+        <div class="stat" id="statLogical">Logical: 0 B</div>
+        <div class="stat" id="statCompressed">Compressed: 0 B</div>
+        <div class="stat" id="statWorkingSet">Working set: 0 B</div>
+        <div class="stat" id="statRatio">Ratio: 1.00</div>
+        <div class="stat" id="statFiles">Files: 0</div>
+        <div class="toolbar">
+          <button id="evictBtn">Evict cache</button>
+          <button id="scanBtn">Scan integrity</button>
+        </div>
+        <div class="small" id="diskStatus">Ready</div>
+      </aside>
+    </div>
+
+    <script type="module">
+      const CHUNK_SIZE = 64 * 1024;
+      const INDEX_FILE = '.termstudio-vfs-index.json';
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+      const memoryCache = new Map();
+
+      let activeFilePath = null;
+      let index = { files: {} };
+
+      const $ = (id) => document.getElementById(id);
+      const ui = {
+        fileList: $('fileList'), newFileName: $('newFileName'), createFileBtn: $('createFileBtn'),
+        activeFileLabel: $('activeFileLabel'), editor: $('editor'), saveFileBtn: $('saveFileBtn'),
+        compressFileBtn: $('compressFileBtn'), terminalLog: $('terminalLog'), terminalInput: $('terminalInput'), runCommandBtn: $('runCommandBtn'),
+        supervisorModel: $('supervisorModel'), specialistModel: $('specialistModel'), agentModeToggle: $('agentModeToggle'),
+        aiPrompt: $('aiPrompt'), askAiBtn: $('askAiBtn'), aiResponse: $('aiResponse'),
+        statLogical: $('statLogical'), statCompressed: $('statCompressed'), statWorkingSet: $('statWorkingSet'),
+        statRatio: $('statRatio'), statFiles: $('statFiles'), evictBtn: $('evictBtn'), scanBtn: $('scanBtn'), diskStatus: $('diskStatus')
+      };
+
+      function log(msg) { ui.terminalLog.textContent += `\n${msg}`; ui.terminalLog.scrollTop = ui.terminalLog.scrollHeight; }
+      function fmt(bytes) { if (bytes < 1024) return `${bytes} B`; if (bytes < 1024*1024) return `${(bytes/1024).toFixed(1)} KB`; return `${(bytes/1024/1024).toFixed(2)} MB`; }
+      function checksum(bytes) { return crypto.subtle.digest('SHA-256', bytes).then((h) => Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2,'0')).join('')); }
+      function parseAgentCmd(raw) { const m = /^agent\s+review(?:\s+(.+))?$/i.exec(raw.trim()); return m ? {type:'agent-review', target:m[1]||null} : {type:'unknown'}; }
+      function buildPrompt(userPrompt){
+        const context = activeFilePath ? `Current file: ${activeFilePath}\n---\n${ui.editor.value.slice(0, 20000)}\n---\n` : 'No current file context available.\n';
+        return `${context}User request: ${userPrompt}`;
+      }
+
+      async function opfsRoot() {
+        if (!navigator.storage?.getDirectory) throw new Error('OPFS not supported in this browser');
+        return navigator.storage.getDirectory();
+      }
+
+      async function getOrCreateDir(root, dirPath) {
+        const segments = dirPath.split('/').filter(Boolean);
+        let current = root;
+        for (const segment of segments) current = await current.getDirectoryHandle(segment, { create: true });
+        return current;
+      }
+
+      async function writeJson(path, data) {
+        const root = await opfsRoot();
+        const file = await root.getFileHandle(path, { create: true });
+        const writable = await file.createWritable();
+        await writable.write(JSON.stringify(data));
+        await writable.close();
+      }
+
+      async function readJson(path, fallback) {
+        try {
+          const root = await opfsRoot();
+          const file = await root.getFileHandle(path);
+          const obj = JSON.parse(await (await file.getFile()).text());
+          return obj;
+        } catch { return fallback; }
+      }
+
+      async function compressChunk(bytes) {
+        if ('CompressionStream' in window) {
+          const stream = new CompressionStream('gzip');
+          const writer = stream.writable.getWriter();
+          writer.write(bytes); writer.close();
+          const compressed = await new Response(stream.readable).arrayBuffer();
+          return new Uint8Array(compressed);
+        }
+        return bytes;
+      }
+
+      async function decompressChunk(bytes) {
+        if ('DecompressionStream' in window) {
+          const stream = new DecompressionStream('gzip');
+          const writer = stream.writable.getWriter();
+          writer.write(bytes); writer.close();
+          const decompressed = await new Response(stream.readable).arrayBuffer();
+          return new Uint8Array(decompressed);
+        }
+        return bytes;
+      }
+
+      async function saveIndex() { await writeJson(INDEX_FILE, index); }
+      async function loadIndex() { index = await readJson(INDEX_FILE, { files: {} }); }
+
+      async function saveFile(path, text) {
+        const bytes = encoder.encode(text);
+        const chunks = [];
+        const root = await opfsRoot();
+        const chunkDir = await getOrCreateDir(root, '.termstudio/chunks');
+
+        for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+          const slice = bytes.slice(i, i + CHUNK_SIZE);
+          const compressed = await compressChunk(slice);
+          const checksumHex = await checksum(slice);
+          const chunkFile = `${path.replaceAll('/', '__')}__${Date.now()}__${i}.bin`;
+
+          const handle = await chunkDir.getFileHandle(chunkFile, { create: true });
+          const writable = await handle.createWritable();
+          await writable.write(compressed);
+          await writable.close();
+
+          chunks.push({ chunkFile, logicalBytes: slice.byteLength, compressedBytes: compressed.byteLength, checksum: checksumHex });
+          memoryCache.set(chunkFile, slice);
+        }
+
+        index.files[path] = { path, updatedAt: new Date().toISOString(), chunks };
+        await saveIndex();
+      }
+
+      async function readChunkBytes(chunkFile) {
+        const cached = memoryCache.get(chunkFile);
+        if (cached) return cached;
+
+        const root = await opfsRoot();
+        const chunkDir = await getOrCreateDir(root, '.termstudio/chunks');
+        const handle = await chunkDir.getFileHandle(chunkFile);
+        const raw = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+        const plain = await decompressChunk(raw);
+        memoryCache.set(chunkFile, plain);
+        return plain;
+      }
+
+      async function openFile(path) {
+        const meta = index.files[path];
+        if (!meta) return;
+
+        const parts = [];
+        for (const chunk of meta.chunks) {
+          const bytes = await readChunkBytes(chunk.chunkFile);
+          const check = await checksum(bytes);
+          if (check !== chunk.checksum) throw new Error(`Integrity check failed for ${chunk.chunkFile}`);
+          parts.push(bytes);
+        }
+
+        const total = new Uint8Array(parts.reduce((sum, p) => sum + p.byteLength, 0));
+        let off = 0;
+        for (const p of parts) { total.set(p, off); off += p.byteLength; }
+
+        activeFilePath = path;
+        ui.activeFileLabel.textContent = path;
+        ui.editor.value = decoder.decode(total);
+      }
+
+      function updateDiskStats() {
+        const files = Object.values(index.files);
+        const logical = files.reduce((s, f) => s + f.chunks.reduce((cs, c) => cs + c.logicalBytes, 0), 0);
+        const compressed = files.reduce((s, f) => s + f.chunks.reduce((cs, c) => cs + c.compressedBytes, 0), 0);
+        const workingSet = [...memoryCache.values()].reduce((s, v) => s + v.byteLength, 0);
+
+        ui.statLogical.textContent = `Logical: ${fmt(logical)}`;
+        ui.statCompressed.textContent = `Compressed: ${fmt(compressed)}`;
+        ui.statWorkingSet.textContent = `Working set: ${fmt(workingSet)}`;
+        ui.statRatio.textContent = `Ratio: ${logical === 0 ? '1.00' : (compressed / logical).toFixed(3)}`;
+        ui.statFiles.textContent = `Files: ${files.length}`;
+      }
+
+      function renderFileList() {
+        ui.fileList.innerHTML = '';
+        const names = Object.keys(index.files).sort();
+        for (const name of names) {
+          const btn = document.createElement('button');
+          btn.textContent = name;
+          btn.className = 'file-item';
+          btn.onclick = async () => {
+            try { await openFile(name); updateDiskStats(); }
+            catch (e) { ui.diskStatus.textContent = String(e); }
+          };
+          ui.fileList.appendChild(btn);
+        }
+      }
+
+      async function callOllama(model, prompt) {
+        const res = await fetch('http://127.0.0.1:11434/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, prompt, stream: false })
+        });
+        if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+        const data = await res.json();
+        return data.response || '';
+      }
+
+      async function askAI() {
+        const userPrompt = ui.aiPrompt.value.trim();
+        if (!userPrompt) return;
+
+        const fullPrompt = buildPrompt(userPrompt);
+        ui.aiResponse.value = 'Thinking...';
+
+        try {
+          const supervisor = await callOllama(ui.supervisorModel.value.trim(), fullPrompt);
+          if (ui.agentModeToggle.checked) {
+            const specialist = await callOllama(ui.specialistModel.value.trim(), `Review and improve:\n${supervisor}`);
+            ui.aiResponse.value = `Supervisor:\n${supervisor}\n\nSpecialist:\n${specialist}`;
+          } else {
+            ui.aiResponse.value = supervisor;
+          }
+        } catch (e) {
+          ui.aiResponse.value = `AI request failed: ${String(e)}`;
+        }
+      }
+
+      async function runTerminalCommand() {
+        const raw = ui.terminalInput.value;
+        ui.terminalInput.value = '';
+        const parsed = parseAgentCmd(raw);
+
+        if (parsed.type === 'agent-review') {
+          if (!activeFilePath) return log('[agent] No active file for review.');
+          const approved = window.confirm(`Run agent review on ${parsed.target || activeFilePath}?`);
+          if (!approved) return log('[agent] Review cancelled by user.');
+
+          ui.aiPrompt.value = `Review this file and suggest safe improvements: ${parsed.target || activeFilePath}`;
+          ui.agentModeToggle.checked = true;
+          await askAI();
+          log(`[agent] Review complete for ${parsed.target || activeFilePath}`);
+          return;
+        }
+
+        log(`[terminal] Unknown command: ${raw}`);
+      }
+
+      async function integrityScan() {
+        for (const [path, meta] of Object.entries(index.files)) {
+          for (const chunk of meta.chunks) {
+            try {
+              const bytes = await readChunkBytes(chunk.chunkFile);
+              const check = await checksum(bytes);
+              if (check !== chunk.checksum) throw new Error('checksum mismatch');
+            } catch {
+              ui.diskStatus.textContent = `Integrity failed: ${path}`;
+              return;
+            }
+          }
+        }
+        ui.diskStatus.textContent = 'Integrity scan passed';
+      }
+
+      ui.createFileBtn.onclick = async () => {
+        const path = ui.newFileName.value.trim();
+        if (!path) return;
+        if (!index.files[path]) await saveFile(path, '');
+        await openFile(path);
+        renderFileList(); updateDiskStats();
+      };
+
+      ui.saveFileBtn.onclick = async () => {
+        if (!activeFilePath) return;
+        await saveFile(activeFilePath, ui.editor.value);
+        ui.diskStatus.textContent = `Saved ${activeFilePath}`;
+        renderFileList(); updateDiskStats();
+      };
+
+      ui.compressFileBtn.onclick = async () => {
+        if (!activeFilePath) return;
+        await saveFile(activeFilePath, ui.editor.value);
+        ui.diskStatus.textContent = `Compressed ${activeFilePath}`;
+        updateDiskStats();
+      };
+
+      ui.askAiBtn.onclick = askAI;
+      ui.runCommandBtn.onclick = runTerminalCommand;
+      ui.evictBtn.onclick = () => { memoryCache.clear(); updateDiskStats(); ui.diskStatus.textContent = 'Working set evicted'; };
+      ui.scanBtn.onclick = integrityScan;
+
+      try {
+        await loadIndex();
+        renderFileList();
+        updateDiskStats();
+      } catch (e) {
+        ui.diskStatus.textContent = `Init failed: ${String(e)}`;
+      }
+    </script>
+  </body>
+</html>
