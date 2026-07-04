@@ -12,3 +12,4 @@ export * from './gates.js';
 export * from './termstudio-core.js';
 export * from './termstudio-tool.js';
 export * from './merge-strategy.js';
+export * from './coderabbit.js';
