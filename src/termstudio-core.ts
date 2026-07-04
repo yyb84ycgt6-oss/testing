@@ -61,7 +61,7 @@ export function parseTerminalCommand(raw: string): ParsedTerminalCommand {
   if (lower === 'agent review') {
     return { type: 'agent-review', target: null };
   }
-  if (/^agent[ \t\r\n\f\v]+review[ \t\r\n\f\v]+\S/i.test(trimmed)) {
+  if (/^agent\s+review\s+\S/i.test(trimmed)) {
     const target = trimmed.slice(trimmed.toLowerCase().indexOf('review') + 'review'.length).trim() || null;
     return { type: 'agent-review', target };
   }

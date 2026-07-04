@@ -107,7 +107,7 @@
       function log(msg) { ui.terminalLog.textContent += `\n${msg}`; ui.terminalLog.scrollTop = ui.terminalLog.scrollHeight; }
       function fmt(bytes) { if (bytes < 1024) return `${bytes} B`; if (bytes < 1024*1024) return `${(bytes/1024).toFixed(1)} KB`; return `${(bytes/1024/1024).toFixed(2)} MB`; }
       function checksum(bytes) { return crypto.subtle.digest('SHA-256', bytes).then((h) => Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2,'0')).join('')); }
-      function parseAgentCmd(raw) { const m = /^agent\s+review(?:\s+(.+))?$/i.exec(raw.trim()); return m ? {type:'agent-review', target:m[1]||null} : {type:'unknown'}; }
+      function parseAgentCmd(raw) { const t=raw.trim(),l=t.toLowerCase(); if(l==='agent review')return{type:'agent-review',target:null}; if(/^agent\s+review\s+\S/i.test(t)){const tgt=t.slice(l.indexOf('review')+6).trim()||null;return{type:'agent-review',target:tgt};}return{type:'unknown'}; }
       function buildPrompt(userPrompt){
         const context = activeFilePath ? `Current file: ${activeFilePath}\n---\n${ui.editor.value.slice(0, 20000)}\n---\n` : 'No current file context available.\n';
         return `${context}User request: ${userPrompt}`;

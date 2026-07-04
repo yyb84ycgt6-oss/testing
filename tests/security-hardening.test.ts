@@ -111,7 +111,10 @@ describe('PluginSecurityManager: registerVerified', () => {
     const manager = new PluginSecurityManager();
     const sig = signManifest(baseManifest, 'secret');
     expect(() => manager.registerVerified(baseManifest, sig, 'secret')).not.toThrow();
-    expect(manager.readState(baseManifest.id).enabled).toBe(true);
+    const state = manager.readState(baseManifest.id);
+    expect(state.enabled).toBe(true);
+    expect(state.memoryMbUsed).toBe(0);
+    expect(state.cpuMsUsedCurrentMinute).toBe(0);
   });
 
   it('rejects registration when signature is invalid', () => {
