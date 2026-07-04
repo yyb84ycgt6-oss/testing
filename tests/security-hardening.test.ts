@@ -156,7 +156,36 @@ describe('CompressedVFS: path injection prevention', () => {
   });
 });
 
-// --- Group 3 / ollama.ts ---
+// --- Group 7 / termstudio-core.ts ---
+
+import { parseTerminalCommand } from '../src/termstudio-core.js';
+
+describe('parseTerminalCommand: ReDoS resistance', () => {
+  it('parses agent review with target', () => {
+    const result = parseTerminalCommand('agent review src/vault.ts');
+    expect(result.type).toBe('agent-review');
+    expect(result.target).toBe('src/vault.ts');
+  });
+
+  it('parses agent review without target', () => {
+    const result = parseTerminalCommand('agent review');
+    expect(result.type).toBe('agent-review');
+    expect(result.target).toBeNull();
+  });
+
+  it('completes in O(n) on long whitespace-only suffix (ReDoS probe)', () => {
+    const malicious = 'agent review' + ' '.repeat(5000);
+    const start = Date.now();
+    const result = parseTerminalCommand(malicious);
+    const elapsed = Date.now() - start;
+    // Should complete near-instantly; ReDoS would take seconds
+    expect(elapsed).toBeLessThan(100);
+    // Whitespace-only suffix trimmed → no target
+    expect(result.type).toBe('agent-review');
+    expect(result.target).toBeNull();
+  });
+});
+
 
 describe('OllamaClient: SSRF prevention', () => {
   it('rejects remote hostnames', () => {

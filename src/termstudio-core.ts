@@ -56,9 +56,14 @@ export function buildAiPrompt(userPrompt: string, activeFilePath: string | null,
 
 export function parseTerminalCommand(raw: string): ParsedTerminalCommand {
   const trimmed = raw.trim();
-  const match = /^agent\s+review(?:\s+(.+))?$/i.exec(trimmed);
-  if (match) {
-    return { type: 'agent-review', target: match[1]?.trim() ?? null };
+  const lower = trimmed.toLowerCase();
+  // Use string matching instead of backtracking regex to avoid ReDoS
+  if (lower === 'agent review') {
+    return { type: 'agent-review', target: null };
+  }
+  if (/^agent[ \t\r\n\f\v]+review[ \t\r\n\f\v]+\S/i.test(trimmed)) {
+    const target = trimmed.slice(trimmed.toLowerCase().indexOf('review') + 'review'.length).trim() || null;
+    return { type: 'agent-review', target };
   }
   return { type: 'unknown', raw: trimmed };
 }
