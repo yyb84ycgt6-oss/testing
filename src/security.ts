@@ -85,6 +85,9 @@ export class SignedAuditLogChain {
   private readonly secret: Buffer;
 
   constructor(secret?: Buffer) {
+    if (secret !== undefined && secret.length === 0) {
+      throw new Error('HMAC secret must not be empty');
+    }
     this.secret = secret ? Buffer.from(secret) : randomBytes(32);
   }
 

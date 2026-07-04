@@ -42,6 +42,12 @@ function checksum(buffer: Buffer): string {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
+function assertValidPath(path: string): void {
+  if (!path || path.length > 1024 || path.includes('\0')) {
+    throw new Error(`Invalid VFS path: "${path.slice(0, 64)}"`);
+  }
+}
+
 class LruCache {
   private readonly map = new Map<string, Buffer>();
   private currentSize = 0;
@@ -104,6 +110,7 @@ export class CompressedVFS {
   }
 
   writeFile(path: string, content: Buffer | string): { snapshotId: string | null } {
+    assertValidPath(path);
     const buffer = Buffer.isBuffer(content) ? Buffer.from(content) : Buffer.from(content, 'utf8');
     const existing = this.files.get(path);
     let snapshotId: string | null = null;
@@ -140,6 +147,7 @@ export class CompressedVFS {
   }
 
   readFile(path: string): Buffer {
+    assertValidPath(path);
     const file = this.files.get(path);
     if (!file) throw new Error(`File not found: ${path}`);
 
@@ -172,6 +180,7 @@ export class CompressedVFS {
   }
 
   deleteFile(path: string): { snapshotId: string | null } {
+    assertValidPath(path);
     const existing = this.files.get(path);
     if (!existing) return { snapshotId: null };
 

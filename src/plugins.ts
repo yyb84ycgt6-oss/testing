@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 export type PluginPermission = 'read' | 'write' | 'exec' | 'network';
 
@@ -39,7 +39,20 @@ export class PluginSecurityManager {
   verifyManifest(manifest: PluginManifest, signature: string, secret: string): boolean {
     if (manifest.permissionSchemaVersion !== 1) return false;
     const expected = signManifest(manifest, secret);
-    return expected === signature;
+    // Use timing-safe comparison to prevent signature oracle attacks
+    if (expected.length !== signature.length) return false;
+    return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
+  }
+
+  /**
+   * Registers a plugin only after successfully verifying its manifest signature.
+   * Prefer this over `register` for untrusted plugin manifests.
+   */
+  registerVerified(manifest: PluginManifest, signature: string, secret: string): void {
+    if (!this.verifyManifest(manifest, signature, secret)) {
+      throw new Error(`Plugin ${manifest.id}: manifest signature verification failed`);
+    }
+    this.register(manifest);
   }
 
   register(manifest: PluginManifest): void {
