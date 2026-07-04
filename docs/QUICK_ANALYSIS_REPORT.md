@@ -59,6 +59,35 @@ Both spec docs are deleted in PR #4 but no equivalent replacement content is pre
 
 ---
 
-## 4. Summary
+## 4. Focused PR Groups — Ready for Review
+
+All 8 groups have been split out of PR #4 into individual branches. Click any link below to open a side-by-side diff vs `main`.
+
+| # | Group | Compare Link | Contents |
+|---|---|---|---|
+| 8 | Build Config | [compare →](https://github.com/yyb84ycgt6-oss/testing/compare/main...copilot/group-8-build-config) | package.json, tsconfig, src/index.ts, .gitignore |
+| 2 | Security Foundation | [compare →](https://github.com/yyb84ycgt6-oss/testing/compare/main...copilot/group-2-security-foundation) | types, crypto, vault, security, gates + tests |
+| 3 | AI Model Layer | [compare →](https://github.com/yyb84ycgt6-oss/testing/compare/main...copilot/group-3-ai-model-layer) | models, ollama, providers |
+| 4 | Agent Orchestration | [compare →](https://github.com/yyb84ycgt6-oss/testing/compare/main...copilot/group-4-agent-orchestration) | agents, plugins + tests |
+| 5 | Integrations Catalog | [compare →](https://github.com/yyb84ycgt6-oss/testing/compare/main...copilot/group-5-integrations-catalog) | integrations + tests |
+| 6 | Virtual File System | [compare →](https://github.com/yyb84ycgt6-oss/testing/compare/main...copilot/group-6-virtual-file-system) | vfs + tests |
+| 7 | TermStudio UI | [compare →](https://github.com/yyb84ycgt6-oss/testing/compare/main...copilot/group-7-termstudio-ui) | termstudio-core, termstudio-tool, termstudio.html + tests |
+| 1 | Docs & Architecture | [compare →](https://github.com/yyb84ycgt6-oss/testing/compare/main...copilot/group-1-docs-architecture) | Sirius plan, Base44 source, archived spec docs |
+
+To open any group as a formal PR: click the compare link → **Create pull request**.
+
+### Suggested merge combinations for a unified app
+
+| Asset idea | Groups to combine |
+|---|---|
+| **Core security lib** | 8 + 2 |
+| **AI runtime** | 8 + 2 + 3 + 4 |
+| **Full backend** | 8 + 2 + 3 + 4 + 5 + 6 |
+| **Complete app** | all 8 groups |
+| **Docs-only update** | 1 only |
+
+---
+
+## 5. Summary
 
 The repository is in a clean planning state on `main`. PR #4 brings useful new docs but must not be merged in its current form due to the committed `node_modules/` directory. The fixes are straightforward: add `.gitignore`, strip `node_modules/` from the import PR, and split the work into reviewable chunks.
