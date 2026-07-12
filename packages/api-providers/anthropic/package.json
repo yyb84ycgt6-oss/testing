@@ -1,0 +1,9 @@
+{
+  "name": "@google-api/anthropic",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": { "build": "tsc" },
+  "dependencies": { "@anthropic-ai/sdk": "^0.26.1" },
+  "devDependencies": { "typescript": "^5.4.5", "@types/node": "^20.14.0" }
+}
